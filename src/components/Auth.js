@@ -26,13 +26,18 @@ function Auth() {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
     } catch (err) {
-      alert(err.message);
+      alert("Google login failed: " + err.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // 🔥 SIGNUP
   const handleSignup = async () => {
+    if (!name || !email || !password) {
+      return alert("Please fill all fields!");
+    }
+
     try {
       setLoading(true);
 
@@ -49,13 +54,17 @@ function Auth() {
 
     } catch (err) {
       alert(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   // 🔐 LOGIN
   const handleLogin = async () => {
+    if (!email || !password) {
+      return alert("Enter email and password!");
+    }
+
     try {
       setLoading(true);
 
@@ -63,14 +72,15 @@ function Auth() {
 
       if (!userCred.user.emailVerified) {
         alert("Verify your email first!");
+        await auth.signOut(); // 🔥 IMPORTANT FIX
         return;
       }
 
     } catch (err) {
       alert(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   // 🔑 RESET PASSWORD
@@ -87,8 +97,8 @@ function Auth() {
 
   return (
     <div className="auth-container">
-
       <div className="auth-card">
+
         <h2>{isSignup ? "Create Account" : "Welcome Back"}</h2>
 
         {isSignup && (
@@ -112,29 +122,40 @@ function Auth() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button onClick={isSignup ? handleSignup : handleLogin}>
-          {loading ? "Loading..." : isSignup ? "Sign Up" : "Login"}
+        <button
+          onClick={isSignup ? handleSignup : handleLogin}
+          disabled={loading}
+        >
+          {loading ? "Please wait..." : isSignup ? "Sign Up" : "Login"}
         </button>
 
         {!isSignup && (
           <p className="link" onClick={handleResetPassword}>
-            Forgot Password?
+            🔑 Forgot Password?
           </p>
         )}
 
         <div className="divider">OR</div>
 
-        <button className="google-btn" onClick={handleGoogleLogin}>
+        {/* 🔥 GOOGLE BUTTON */}
+        <button
+          className="google-btn"
+          onClick={handleGoogleLogin}
+          disabled={loading}
+        >
           🔵 Continue with Google
         </button>
 
-        <p className="toggle" onClick={() => setIsSignup(!isSignup)}>
+        <p
+          className="toggle"
+          onClick={() => setIsSignup(!isSignup)}
+        >
           {isSignup
             ? "Already have an account? Login"
             : "New here? Create account"}
         </p>
-      </div>
 
+      </div>
     </div>
   );
 }

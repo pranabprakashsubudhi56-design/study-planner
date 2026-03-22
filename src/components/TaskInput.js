@@ -1,30 +1,50 @@
 import React, { useState } from "react";
 import { db } from "../firebase";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
 function TaskInput({ user, tasks }) {
   const [name, setName] = useState("");
   const [deadline, setDeadline] = useState("");
   const [priority, setPriority] = useState("High");
+  const [loading, setLoading] = useState(false);
 
   const addTask = async () => {
-    if (!name) return;
+    // ✅ Validation
+    if (!name.trim()) {
+      return alert("Task name is required!");
+    }
 
-    await addDoc(collection(db, "tasks"), {
-      name,
-      deadline,
-      priority,
-      completed: false,
-      userId: user.uid,
-      order: tasks.length // 🔥 IMPORTANT for drag order
-    });
+    try {
+      setLoading(true);
 
-    setName("");
-    setDeadline("");
+      await addDoc(collection(db, "tasks"), {
+        name,
+        deadline,
+        priority,
+        completed: false,
+        userId: user.uid,
+
+        // 🔥 FIXED ORDER (unique)
+        order: Date.now(),
+
+        createdAt: serverTimestamp()
+      });
+
+      // Reset fields
+      setName("");
+      setDeadline("");
+      setPriority("High");
+
+    } catch (err) {
+      alert("Error adding task: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div>
+
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -46,7 +66,10 @@ function TaskInput({ user, tasks }) {
         <option>Low</option>
       </select>
 
-      <button onClick={addTask}>Add Task</button>
+      <button onClick={addTask} disabled={loading}>
+        {loading ? "Adding..." : "Add Task"}
+      </button>
+
     </div>
   );
 }

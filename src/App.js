@@ -16,9 +16,12 @@ import { collection, onSnapshot, query, where, orderBy } from "firebase/firestor
 function App() {
   const [tasks, setTasks] = useState([]);
   const [user, setUser] = useState(null);
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState(
+    localStorage.getItem("theme") || "dark"
+  );
   const [alertMsg, setAlertMsg] = useState("");
 
+  // 🔐 Auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -26,12 +29,14 @@ function App() {
     return () => unsubscribe();
   }, []);
 
+  // 🔔 Notification permission
   useEffect(() => {
     if ("Notification" in window) {
       Notification.requestPermission();
     }
   }, []);
 
+  // 📥 Fetch tasks
   useEffect(() => {
     if (!user) return;
 
@@ -52,6 +57,7 @@ function App() {
     return () => unsubscribe();
   }, [user]);
 
+  // 🔔 Notification
   const showNotification = (title, body) => {
     setAlertMsg(body);
 
@@ -62,6 +68,7 @@ function App() {
     setTimeout(() => setAlertMsg(""), 4000);
   };
 
+  // ⏰ Deadline checker (FIXED: avoid spam)
   useEffect(() => {
     if (!tasks.length) return;
 
@@ -69,14 +76,19 @@ function App() {
       const now = new Date();
 
       tasks.forEach((task) => {
-        if (!task.deadline) return;
+        if (!task.deadline || task.notified) return;
 
         const taskDate = new Date(task.deadline);
         const diff = taskDate - now;
         const hours = diff / (1000 * 60 * 60);
 
         if (hours > 0 && hours < 1) {
-          showNotification("⏰ Task Due Soon", `${task.name} is due soon!`);
+          showNotification(
+            "⏰ Task Due Soon",
+            `${task.name} is due soon!`
+          );
+
+          task.notified = true; // 🔥 prevent repeat
         }
       });
     }, 60000);
@@ -84,10 +96,14 @@ function App() {
     return () => clearInterval(interval);
   }, [tasks]);
 
+  // 🌙 Theme toggle (SAVE FIXED)
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
   };
 
+  // 🚪 Logout
   const handleLogout = async () => {
     await signOut(auth);
   };
@@ -97,14 +113,17 @@ function App() {
   return (
     <div className={`app-container ${theme}`}>
 
+      {/* Sidebar */}
       <div className="sidebar">
         <h2>📚 Planner</h2>
         <p>Dashboard</p>
         <p>Tasks</p>
       </div>
 
+      {/* Main */}
       <div className="main">
 
+        {/* 🔔 Alert */}
         {alertMsg && (
           <div style={{
             background: "#f59e0b",
@@ -116,13 +135,19 @@ function App() {
           </div>
         )}
 
+        {/* 🔥 HEADER */}
         <div style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "20px"
         }}>
-          <h1>Smart Study Planner</h1>
+          <div>
+            <h1>Smart Study Planner</h1>
+            <p style={{ fontSize: "14px", color: "#94a3b8" }}>
+              Welcome, {user.displayName || "User"} 👋
+            </p>
+          </div>
 
           <div style={{ display: "flex", gap: "10px" }}>
             <button onClick={toggleTheme}>
@@ -135,18 +160,22 @@ function App() {
           </div>
         </div>
 
+        {/* Profile */}
         <div className="card">
           <Profile />
         </div>
 
+        {/* Task Input */}
         <div className="card">
           <TaskInput user={user} tasks={tasks} />
         </div>
 
+        {/* Task List */}
         <div className="card">
           <TaskList tasks={tasks} />
         </div>
 
+        {/* Row */}
         <div className="row">
           <div className="card">
             <Progress tasks={tasks} />
@@ -157,10 +186,12 @@ function App() {
           </div>
         </div>
 
+        {/* Chart */}
         <div className="card">
           <ChartView tasks={tasks} />
         </div>
 
+        {/* Suggestions */}
         <div className="card">
           <Suggestion tasks={tasks} />
         </div>
