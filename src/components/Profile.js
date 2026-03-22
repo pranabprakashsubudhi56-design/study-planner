@@ -7,13 +7,20 @@ function Profile() {
   if (!user) return null;
 
   return (
-    <div className="card">
-      <h3>👤 Profile</h3>
+    <div>
+      <h3>👤 User Profile</h3>
+
+      <p><strong>Name:</strong> {user.displayName || "Not set"}</p>
       <p><strong>Email:</strong> {user.email}</p>
       <p><strong>User ID:</strong> {user.uid}</p>
 
       {user.photoURL && (
-        <img src={user.photoURL} alt="profile" width="60" />
+        <img
+          src={user.photoURL}
+          alt="profile"
+          width="70"
+          style={{ borderRadius: "50%", marginTop: "10px" }}
+        />
       )}
     </div>
   );

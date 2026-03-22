@@ -3,54 +3,63 @@ import { auth } from "../firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut,
-  GoogleAuthProvider,
-  signInWithPopup
+  sendEmailVerification,
+  updateProfile
 } from "firebase/auth";
 
 function Auth() {
+  const [isSignup, setIsSignup] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Email Signup
-  const signup = async () => {
+  // 🔥 SIGNUP
+  const handleSignup = async () => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      alert("Signup successful!");
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+
+      // ✅ FIXED: using name
+      await updateProfile(userCred.user, {
+        displayName: name
+      });
+
+      await sendEmailVerification(userCred.user);
+
+      alert("Signup successful! Check your email for verification.");
+      setIsSignup(false);
+
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // Email Login
-  const login = async () => {
+  // 🔐 LOGIN
+  const handleLogin = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCred = await signInWithEmailAndPassword(auth, email, password);
+
+      if (!userCred.user.emailVerified) {
+        alert("Please verify your email first!");
+        return;
+      }
+
       alert("Login successful!");
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // Google Login
-  const googleLogin = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      alert("Google login successful!");
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
-  // Logout
-  const logout = async () => {
-    await signOut(auth);
-  };
-
   return (
     <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h2>🔐 Login / Signup</h2>
+      <h2>{isSignup ? "📝 Sign Up" : "🔐 Login"}</h2>
+
+      {isSignup && (
+        <input
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      )}
 
       <input
         placeholder="Email"
@@ -65,19 +74,22 @@ function Auth() {
 
       <br />
 
-      <button onClick={signup}>Sign Up</button>
-      <button onClick={login}>Login</button>
+      {isSignup ? (
+        <button onClick={handleSignup}>Sign Up</button>
+      ) : (
+        <button onClick={handleLogin}>Login</button>
+      )}
 
       <br /><br />
 
-      {/* 🔥 GOOGLE BUTTON */}
-      <button onClick={googleLogin} style={{ background: "#db4437" }}>
-        🔥 Login with Google
-      </button>
-
-      <br /><br />
-
-      <button onClick={logout}>Logout</button>
+      <p
+        style={{ cursor: "pointer", color: "blue" }}
+        onClick={() => setIsSignup(!isSignup)}
+      >
+        {isSignup
+          ? "Already have an account? Login"
+          : "New user? Sign up"}
+      </p>
     </div>
   );
 }

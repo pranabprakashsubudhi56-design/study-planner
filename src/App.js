@@ -19,7 +19,6 @@ function App() {
   const [theme, setTheme] = useState("dark");
   const [alertMsg, setAlertMsg] = useState("");
 
-  // 🔐 Auth listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -27,14 +26,12 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // 🔔 Ask notification permission
   useEffect(() => {
     if ("Notification" in window) {
       Notification.requestPermission();
     }
   }, []);
 
-  // 📥 Fetch tasks (with order)
   useEffect(() => {
     if (!user) return;
 
@@ -55,21 +52,16 @@ function App() {
     return () => unsubscribe();
   }, [user]);
 
-  // 🔔 Notification function
   const showNotification = (title, body) => {
     setAlertMsg(body);
 
     if (Notification.permission === "granted") {
-      new Notification(title, {
-        body: body,
-        icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png"
-      });
+      new Notification(title, { body });
     }
 
     setTimeout(() => setAlertMsg(""), 4000);
   };
 
-  // ⏰ Deadline checker
   useEffect(() => {
     if (!tasks.length) return;
 
@@ -84,10 +76,7 @@ function App() {
         const hours = diff / (1000 * 60 * 60);
 
         if (hours > 0 && hours < 1) {
-          showNotification(
-            "⏰ Task Due Soon",
-            `${task.name} is due in less than 1 hour!`
-          );
+          showNotification("⏰ Task Due Soon", `${task.name} is due soon!`);
         }
       });
     }, 60000);
@@ -95,35 +84,27 @@ function App() {
     return () => clearInterval(interval);
   }, [tasks]);
 
-  // 🌙 Theme toggle
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
-  // 🚪 Logout
   const handleLogout = async () => {
     await signOut(auth);
   };
 
-  // 🔐 Show login if not logged in
-  if (!user) {
-    return <Auth />;
-  }
+  if (!user) return <Auth />;
 
   return (
     <div className={`app-container ${theme}`}>
 
-      {/* Sidebar */}
       <div className="sidebar">
         <h2>📚 Planner</h2>
         <p>Dashboard</p>
         <p>Tasks</p>
       </div>
 
-      {/* Main */}
       <div className="main">
 
-        {/* 🔔 In-app notification */}
         {alertMsg && (
           <div style={{
             background: "#f59e0b",
@@ -135,40 +116,37 @@ function App() {
           </div>
         )}
 
-        {/* Header */}
         <div style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center"
+          alignItems: "center",
+          marginBottom: "20px"
         }}>
           <h1>Smart Study Planner</h1>
 
-          <button className="logout-btn" onClick={handleLogout}>
-            🚪 Logout
-          </button>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button onClick={toggleTheme}>
+              {theme === "dark" ? "🌞 Light" : "🌙 Dark"}
+            </button>
+
+            <button className="logout-btn" onClick={handleLogout}>
+              🚪 Logout
+            </button>
+          </div>
         </div>
 
-        {/* Theme */}
-        <button onClick={toggleTheme}>
-          {theme === "dark" ? "🌞 Light" : "🌙 Dark"}
-        </button>
-
-        {/* Profile */}
         <div className="card">
           <Profile />
         </div>
 
-        {/* Task Input */}
         <div className="card">
           <TaskInput user={user} tasks={tasks} />
         </div>
 
-        {/* Task List */}
         <div className="card">
           <TaskList tasks={tasks} />
         </div>
 
-        {/* Row */}
         <div className="row">
           <div className="card">
             <Progress tasks={tasks} />
@@ -179,12 +157,10 @@ function App() {
           </div>
         </div>
 
-        {/* Chart */}
         <div className="card">
           <ChartView tasks={tasks} />
         </div>
 
-        {/* Suggestion */}
         <div className="card">
           <Suggestion tasks={tasks} />
         </div>
