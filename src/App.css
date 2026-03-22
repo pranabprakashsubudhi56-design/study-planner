@@ -1,0 +1,180 @@
+/* GLOBAL RESET + SMOOTH TRANSITION */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  transition: all 0.25s ease;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #0f172a;
+  color: white;
+}
+
+/* MAIN CONTAINER */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 230px;
+  height: 100vh;
+  background: #020617;
+  padding: 25px 20px;
+  border-right: 1px solid #1e293b;
+}
+
+.sidebar h2 {
+  margin-bottom: 25px;
+  font-size: 20px;
+}
+
+.sidebar p {
+  margin: 12px 0;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 15px;
+}
+
+.sidebar p:hover {
+  color: white;
+  transform: translateX(6px);
+}
+
+/* MAIN CONTENT */
+.main {
+  flex: 1;
+  padding: 25px;
+}
+
+/* HEADER FIX */
+.main h1 {
+  margin-bottom: 15px;
+}
+
+/* CARDS */
+.card {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.card:hover {
+  transform: translateY(-6px);
+}
+
+/* ROW LAYOUT */
+.row {
+  display: flex;
+  gap: 20px;
+}
+
+.row .card {
+  flex: 1;
+}
+
+/* INPUTS */
+input, select {
+  padding: 10px;
+  margin: 6px;
+  border-radius: 6px;
+  border: none;
+  outline: none;
+}
+
+/* BUTTONS */
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+button:hover {
+  transform: scale(1.06);
+}
+
+/* LOGOUT BUTTON SPECIAL */
+.logout-btn {
+  background: #ef4444;
+}
+
+.logout-btn:hover {
+  background: #dc2626;
+}
+
+/* ===================== */
+/* 🌞 LIGHT MODE */
+/* ===================== */
+
+.app-container.light {
+  background: #f1f5f9;
+  color: black;
+}
+
+.light .sidebar {
+  background: #e2e8f0;
+}
+
+.light .sidebar p {
+  color: #475569;
+}
+
+.light .sidebar p:hover {
+  color: black;
+}
+
+.light .card {
+  background: white;
+  color: black;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+
+.light input,
+.light select {
+  background: #f8fafc;
+  color: black;
+}
+
+.light button {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+/* ===================== */
+/* 📱 MOBILE RESPONSIVE */
+/* ===================== */
+
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px;
+  }
+
+  .sidebar h2 {
+    display: none;
+  }
+
+  .main {
+    padding: 15px;
+  }
+
+  .row {
+    flex-direction: column;
+  }
+}
