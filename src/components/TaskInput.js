@@ -6,35 +6,76 @@ function TaskInput({ user }) {
   const [name, setName] = useState("");
   const [deadline, setDeadline] = useState("");
   const [priority, setPriority] = useState("High");
+  const [loading, setLoading] = useState(false);
 
   const addTask = async () => {
-    if (!name.trim()) return alert("Task required!");
+    // 🔥 FIX 1: Check user
+    if (!user || !user.uid) {
+      alert("User not loaded yet. Please wait.");
+      return;
+    }
 
-    await addDoc(collection(db, "tasks"), {
-      name,
-      deadline,
-      priority,
-      completed: false,
-      userId: user.uid,
-      order: Date.now(),
-      notified: false,
-      createdAt: serverTimestamp()
-    });
+    // 🔥 FIX 2: Validation
+    if (!name.trim()) {
+      alert("Task required!");
+      return;
+    }
 
-    setName("");
-    setDeadline("");
+    try {
+      setLoading(true);
+
+      await addDoc(collection(db, "tasks"), {
+        name,
+        deadline,
+        priority,
+        completed: false,
+        userId: user.uid,
+        order: Date.now(),
+        notified: false,
+        createdAt: serverTimestamp()
+      });
+
+      // Reset
+      setName("");
+      setDeadline("");
+      setPriority("High");
+
+    } catch (err) {
+      console.error(err);
+      alert("Error: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div>
-      <input value={name} onChange={(e) => setName(e.target.value)} />
-      <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
-      <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Enter task"
+      />
+
+      <input
+        type="date"
+        value={deadline}
+        onChange={(e) => setDeadline(e.target.value)}
+      />
+
+      <select
+        value={priority}
+        onChange={(e) => setPriority(e.target.value)}
+      >
         <option>High</option>
         <option>Medium</option>
         <option>Low</option>
       </select>
-      <button onClick={addTask}>Add Task</button>
+
+      <button onClick={addTask} disabled={loading}>
+        {loading ? "Adding..." : "Add Task"}
+      </button>
+
     </div>
   );
 }
