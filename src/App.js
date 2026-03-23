@@ -11,32 +11,27 @@ import "./App.css";
 
 import { auth, db } from "./firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+  doc,
+  updateDoc
+} from "firebase/firestore";
 
 function App() {
   const [tasks, setTasks] = useState([]);
   const [user, setUser] = useState(null);
-  const [theme, setTheme] = useState(
-    localStorage.getItem("theme") || "dark"
-  );
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
   const [alertMsg, setAlertMsg] = useState("");
 
-  // 🔐 Auth
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
+    const unsub = onAuthStateChanged(auth, setUser);
+    return () => unsub();
   }, []);
 
-  // 🔔 Notification permission
-  useEffect(() => {
-    if ("Notification" in window) {
-      Notification.requestPermission();
-    }
-  }, []);
-
-  // 📥 Fetch tasks
   useEffect(() => {
     if (!user) return;
 
@@ -46,18 +41,13 @@ function App() {
       orderBy("order", "asc")
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const taskList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setTasks(taskList);
+    const unsub = onSnapshot(q, (snap) => {
+      setTasks(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
 
-    return () => unsubscribe();
+    return () => unsub();
   }, [user]);
 
-  // 🔔 Notification
   const showNotification = (title, body) => {
     setAlertMsg(body);
 
@@ -68,133 +58,78 @@ function App() {
     setTimeout(() => setAlertMsg(""), 4000);
   };
 
-  // ⏰ Deadline checker (FIXED: avoid spam)
   useEffect(() => {
-    if (!tasks.length) return;
-
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       const now = new Date();
 
-      tasks.forEach((task) => {
-        if (!task.deadline || task.notified) return;
+      for (let task of tasks) {
+        if (!task.deadline || task.notified) continue;
 
-        const taskDate = new Date(task.deadline);
-        const diff = taskDate - now;
+        const diff = new Date(task.deadline) - now;
         const hours = diff / (1000 * 60 * 60);
 
         if (hours > 0 && hours < 1) {
-          showNotification(
-            "⏰ Task Due Soon",
-            `${task.name} is due soon!`
-          );
+          showNotification("⏰ Due Soon", task.name);
 
-          task.notified = true; // 🔥 prevent repeat
+          await updateDoc(doc(db, "tasks", task.id), {
+            notified: true
+          });
         }
-      });
+      }
     }, 60000);
 
     return () => clearInterval(interval);
   }, [tasks]);
 
-  // 🌙 Theme toggle (SAVE FIXED)
   const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
+    const t = theme === "dark" ? "light" : "dark";
+    setTheme(t);
+    localStorage.setItem("theme", t);
   };
 
-  // 🚪 Logout
-  const handleLogout = async () => {
-    await signOut(auth);
+  const logout = async () => {
+    if (window.confirm("Logout?")) {
+      await signOut(auth);
+    }
   };
 
   if (!user) return <Auth />;
 
   return (
     <div className={`app-container ${theme}`}>
-
-      {/* Sidebar */}
       <div className="sidebar">
         <h2>📚 Planner</h2>
         <p>Dashboard</p>
         <p>Tasks</p>
       </div>
 
-      {/* Main */}
       <div className="main">
 
-        {/* 🔔 Alert */}
-        {alertMsg && (
-          <div style={{
-            background: "#f59e0b",
-            padding: "10px",
-            borderRadius: "8px",
-            marginBottom: "10px"
-          }}>
-            🔔 {alertMsg}
-          </div>
-        )}
+        {alertMsg && <div className="alert">🔔 {alertMsg}</div>}
 
-        {/* 🔥 HEADER */}
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px"
-        }}>
+        <div className="header">
           <div>
-            <h1>Smart Study Planner</h1>
-            <p style={{ fontSize: "14px", color: "#94a3b8" }}>
-              Welcome, {user.displayName || "User"} 👋
-            </p>
+            <h1>Smart Planner</h1>
+            <p>Welcome, {user.displayName}</p>
           </div>
 
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button onClick={toggleTheme}>
-              {theme === "dark" ? "🌞 Light" : "🌙 Dark"}
-            </button>
-
-            <button className="logout-btn" onClick={handleLogout}>
-              🚪 Logout
-            </button>
+          <div>
+            <button onClick={toggleTheme}>Toggle</button>
+            <button onClick={logout} className="logout-btn">Logout</button>
           </div>
         </div>
 
-        {/* Profile */}
-        <div className="card">
-          <Profile />
-        </div>
+        <div className="card"><Profile /></div>
+        <div className="card"><TaskInput user={user} /></div>
+        <div className="card"><TaskList tasks={tasks} /></div>
 
-        {/* Task Input */}
-        <div className="card">
-          <TaskInput user={user} tasks={tasks} />
-        </div>
-
-        {/* Task List */}
-        <div className="card">
-          <TaskList tasks={tasks} />
-        </div>
-
-        {/* Row */}
         <div className="row">
-          <div className="card">
-            <Progress tasks={tasks} />
-          </div>
-
-          <div className="card">
-            <Timer />
-          </div>
+          <div className="card"><Progress tasks={tasks} /></div>
+          <div className="card"><Timer /></div>
         </div>
 
-        {/* Chart */}
-        <div className="card">
-          <ChartView tasks={tasks} />
-        </div>
-
-        {/* Suggestions */}
-        <div className="card">
-          <Suggestion tasks={tasks} />
-        </div>
+        <div className="card"><ChartView tasks={tasks} /></div>
+        <div className="card"><Suggestion tasks={tasks} /></div>
 
       </div>
     </div>

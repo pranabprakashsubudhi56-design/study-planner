@@ -1,16 +1,18 @@
 import React from "react";
 
 function Suggestion({ tasks }) {
-  let high = tasks.filter(t => t.priority === "High" && !t.completed);
+  let sorted = tasks
+    .filter(t => !t.completed && t.deadline)
+    .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
 
   let text = "";
 
   if (tasks.length === 0) {
     text = "Add tasks to get started 🚀";
-  } else if (high.length > 0) {
-    text = "Focus on: " + high[0].name;
+  } else if (sorted.length > 0) {
+    text = "Focus on: " + sorted[0].name;
   } else {
-    text = "Great progress! Keep going 💪";
+    text = "Great work! 🎉";
   }
 
   return <h3>🧠 {text}</h3>;

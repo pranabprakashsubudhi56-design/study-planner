@@ -2,24 +2,16 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// 🔥 Firebase Config
 const firebaseConfig = {
-  apiKey: "AIzaSyDi6eqN6ahE_Tl64DsbDcGj5tUXc2qvSCs",
-  authDomain: "study-planner-a5f81.firebaseapp.com",
-  projectId: "study-planner-a5f81",
-
-  // ✅ FIXED
-  storageBucket: "study-planner-a5f81.appspot.com",
-
-  messagingSenderId: "588338704030",
-  appId: "1:588338704030:web:9693a04408e98cd5c1558f"
+  apiKey: process.env.REACT_APP_API_KEY,
+  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_APP_ID
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// 🔐 Auth
 export const auth = getAuth(app);
-
-// ☁️ Firestore
 export const db = getFirestore(app);
